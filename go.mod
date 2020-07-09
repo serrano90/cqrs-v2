@@ -1,4 +1,4 @@
-module github.com/serrano90/cqrs/v2
+module github.com/serrano90/cqrs-v2
 
 go 1.14
 
