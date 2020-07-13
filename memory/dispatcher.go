@@ -9,12 +9,14 @@ import (
 )
 
 type DispatcherInMemory struct {
-	handlers map[string]interface{}
+	middlewares []cqrs.CommandHandlerMiddleware
+	handlers    map[string]interface{}
 }
 
 func NewDispatcherInMemory() cqrs.Dispatcher {
 	return &DispatcherInMemory{
-		handlers: make(map[string]interface{}, 0),
+		middlewares: make([]cqrs.CommandHandlerMiddleware, 0),
+		handlers:    make(map[string]interface{}, 0),
 	}
 }
 
@@ -32,9 +34,13 @@ func (d *DispatcherInMemory) Dispatch(cq interface{}) (interface{}, error) {
 }
 
 func (d *DispatcherInMemory) dispatchToCommandHandler(cq interface{}, handler interface{}) (interface{}, error) {
-	h, _ := handler.(cqrs.CommandHandler)
+	ch, _ := handler.(cqrs.CommandHandler)
+	h := ch.Handle
 	c, _ := cq.(cqrs.Command)
-	return h.Handle(c)
+	for _, m := range d.middlewares {
+		h = m(h)
+	}
+	return h(c)
 }
 
 func (d *DispatcherInMemory) dispatchToQueryHandler(cq interface{}, handler interface{}) (interface{}, error) {
@@ -56,4 +62,8 @@ func (d *DispatcherInMemory) AddHandler(handler interface{}, cq ...interface{}) 
 
 func (d *DispatcherInMemory) getTypeOf(cq interface{}) string {
 	return reflect.TypeOf(cq).Elem().Name()
+}
+
+func (d *DispatcherInMemory) Use(middleware ...cqrs.CommandHandlerMiddleware) {
+	d.middlewares = append(d.middlewares, middleware...)
 }

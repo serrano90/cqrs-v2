@@ -9,4 +9,6 @@ type Dispatcher interface {
 	Dispatch(interface{}) (interface{}, error)
 	// Add a new to handler for a especified type
 	AddHandler(interface{}, ...interface{}) error
+	// Use is a function where add middleware
+	Use(...CommandHandlerMiddleware)
 }

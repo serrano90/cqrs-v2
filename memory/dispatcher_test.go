@@ -7,6 +7,7 @@ import (
 
 	"github.com/serrano90/cqrs-v2"
 	"github.com/serrano90/cqrs-v2/memory"
+	"github.com/serrano90/cqrs-v2/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,14 +28,14 @@ func TestDispatcherAddHandler(t *testing.T) {
 		"success": {
 			handler: NewMockCommandHandler(),
 			commandQuery: []interface{}{
-				NewTestCommand(),
+				NewTestCommand("x"),
 			},
 			expected: nil,
 		},
 		"when the type name exist": {
 			handler: NewMockCommandHandler(),
 			commandQuery: []interface{}{
-				NewTestCommand(),
+				NewTestCommand("x"),
 			},
 			expected: errors.New(cqrs.ErrMessageHandlerDuplicated + " TestCommand"),
 		},
@@ -54,22 +55,42 @@ func TestDispatcherDispatch(t *testing.T) {
 	tests := map[string]struct {
 		handler      interface{}
 		commandQuery interface{}
+		middleware   []cqrs.CommandHandlerMiddleware
 		expected     error
 	}{
 		"success when the values is a command": {
 			handler:      NewMockCommandHandler(),
-			commandQuery: NewTestCommand(),
+			commandQuery: NewTestCommand("x"),
+			middleware:   nil,
 			expected:     nil,
+		},
+		"success using middlewares": {
+			handler:      NewMockCommandHandler(),
+			commandQuery: NewTestCommand("x"),
+			middleware: []cqrs.CommandHandlerMiddleware{
+				middleware.NewValidationMiddleware(),
+			},
+			expected: nil,
 		},
 		"success when the values is a query": {
 			handler:      NewMockQueryHandler(),
 			commandQuery: NewTestQuery(),
+			middleware:   nil,
 			expected:     nil,
 		},
 		"when the type name does not exit": {
 			handler:      nil,
-			commandQuery: NewTestCommand(),
+			commandQuery: NewTestCommand("x"),
+			middleware:   nil,
 			expected:     errors.New(cqrs.ErrMessageHandlerDoesNotExist),
+		},
+		"when using middlewares and value is not valid": {
+			handler:      NewMockCommandHandler(),
+			commandQuery: NewTestCommand(""),
+			middleware: []cqrs.CommandHandlerMiddleware{
+				middleware.NewValidationMiddleware(),
+			},
+			expected: errors.New("The value is empty"),
 		},
 	}
 
@@ -84,13 +105,17 @@ func TestDispatcherDispatch(t *testing.T) {
 			}
 		}
 
+		d.Use(test.middleware...)
+
 		_, err := d.Dispatch(test.commandQuery)
 		assert.Equal(t, test.expected, err, "They value does not equals")
 	}
 }
 
-func NewTestCommand() cqrs.Command {
-	return &TestCommand{}
+func NewTestCommand(id string) cqrs.Command {
+	return &TestCommand{
+		Id: id,
+	}
 }
 
 type TestCommand struct {
@@ -99,6 +124,13 @@ type TestCommand struct {
 
 func (tc *TestCommand) TypeOf() string {
 	return reflect.TypeOf(tc).Name()
+}
+
+func (tc *TestCommand) Validate() error {
+	if tc.Id == "" {
+		return errors.New("The value is empty")
+	}
+	return nil
 }
 
 func NewMockCommandHandler() cqrs.CommandHandler {
