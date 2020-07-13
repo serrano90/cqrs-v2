@@ -3,7 +3,7 @@ package memory
 import (
 	"reflect"
 
-	"github.com/serrano90/cqrs/v2"
+	"github.com/serrano90/cqrs-v2"
 )
 
 type EventBusInMemory struct {

@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/serrano90/cqrs/v2"
-	"github.com/serrano90/cqrs/v2/memory"
+	"github.com/serrano90/cqrs-v2"
+	"github.com/serrano90/cqrs-v2/memory"
 )
 
 func TestNewInstanceOfEventBus(t *testing.T) {

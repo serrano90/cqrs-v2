@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/serrano90/cqrs/v2"
+	"github.com/serrano90/cqrs-v2"
 )
 
 type DispatcherInMemory struct {
