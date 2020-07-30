@@ -1,32 +1,25 @@
 package cqrs
 
-import "time"
-
 // Create a new instance of base aggregate
 func NewAggregateBase() Aggregate {
 	return &AggregateBase{
-		id:        NewUUIDString(),
-		events:    []Event{},
-		createdAt: time.Now(),
-		updateAt:  time.Now(),
+		id:     NewUUIDString(),
+		events: []Event{},
 	}
 }
 
 // Create a new instance of base aggregate by id
 func NewAggregateBaseById(id string) Aggregate {
 	return &AggregateBase{
-		id:       id,
-		events:   []Event{},
-		updateAt: time.Now(),
+		id:     id,
+		events: []Event{},
 	}
 }
 
 // AggregateBase reprecent a new instance of base aggregate
 type AggregateBase struct {
-	id        string
-	events    []Event
-	createdAt time.Time
-	updateAt  time.Time
+	id     string
+	events []Event
 }
 
 // GetAggreagteID returns the is of aggregate
@@ -46,12 +39,4 @@ func (a *AggregateBase) GetEvents() []Event {
 
 func (a *AggregateBase) ClearEvents() {
 	a.events = []Event{}
-}
-
-func (a *AggregateBase) GetCreatedAt() time.Time {
-	return a.createdAt
-}
-
-func (a *AggregateBase) GetUpdateAt() time.Time {
-	return a.updateAt
 }

@@ -1,7 +1,5 @@
 package cqrs
 
-import "time"
-
 // Aggreagate is a interface that all aggregator should implement
 type Aggregate interface {
 	// GetAggreagteID returns a id of the resource
@@ -12,8 +10,4 @@ type Aggregate interface {
 	GetEvents() []Event
 	// ClearEvents remove all events from the aggregator
 	ClearEvents()
-	// GetCreatedAt get a time where the aggreagate was created
-	GetCreatedAt() time.Time
-	// GetUpdateAt get a time where aggreagate was created
-	GetUpdateAt() time.Time
 }

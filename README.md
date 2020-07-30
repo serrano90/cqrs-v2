@@ -6,7 +6,7 @@ This package is a simple implementation in Go of CQRS(Command Query Responsabili
 
 Install cqrs package in your enviroment:
 ```bash
-$ go get github.com/serrano90/cqrs/v2
+$ go get github.com/serrano90/cqrs-v2
 ```
 
 ## Material from learning
