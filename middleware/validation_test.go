@@ -1,6 +1,7 @@
 package middleware_test
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -27,7 +28,7 @@ func (tc *TestCommand) Validate() error {
 
 type TestCommandHandler struct{}
 
-func (h *TestCommandHandler) Handle(cmd cqrs.Command) (interface{}, error) {
+func (h *TestCommandHandler) Handle(ctx context.Context, cmd cqrs.Command) (interface{}, error) {
 	return "Success", nil
 }
 
@@ -58,7 +59,7 @@ func TestValidateMiddleware(t *testing.T) {
 	for name, test := range cases {
 		t.Logf("Running test case: %s", name)
 		h := m(ch.Handle)
-		resp, err := h(test.cmd)
+		resp, err := h(context.Background(), test.cmd)
 
 		assert.Equal(t, test.expected, resp, "The expected value and result value not equals")
 		assert.Equal(t, test.expectedError, err, "The expected value and result value not equals")

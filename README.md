@@ -1,6 +1,6 @@
 # CQRS V2
 
-This package is a simple implementation in Go of CQRS(Command Query Responsability Segregation). This solution provider interfaces and implementation to use de CQRS in any solution.
+This package is a simple implementation in Go of CQRS(Command Query Responsibility Segregation). We have interfaces and implements to use in any project with this solution.
 
 ## Install
 

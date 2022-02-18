@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -20,40 +21,40 @@ func NewDispatcherInMemory() cqrs.Dispatcher {
 	}
 }
 
-func (d *DispatcherInMemory) Dispatch(cq interface{}) (interface{}, error) {
+func (d *DispatcherInMemory) Dispatch(ctx context.Context, cq interface{}) (interface{}, error) {
 	typeOfName := d.getTypeOf(cq)
 	if handler, ok := d.handlers[typeOfName]; ok {
 		switch handler.(type) {
 		case cqrs.CommandHandler:
-			return d.dispatchToCommandHandler(cq, handler)
+			return d.dispatchToCommandHandler(ctx, cq, handler)
 		case cqrs.QueryHandler:
-			return d.dispatchToQueryHandler(cq, handler)
+			return d.dispatchToQueryHandler(ctx, cq, handler)
 		}
 	}
 	return nil, errors.New(cqrs.ErrMessageHandlerDoesNotExist)
 }
 
-func (d *DispatcherInMemory) dispatchToCommandHandler(cq interface{}, handler interface{}) (interface{}, error) {
+func (d *DispatcherInMemory) dispatchToCommandHandler(ctx context.Context, cq interface{}, handler interface{}) (interface{}, error) {
 	ch, _ := handler.(cqrs.CommandHandler)
 	h := ch.Handle
 	c, _ := cq.(cqrs.Command)
 	for _, m := range d.middlewares {
 		h = m(h)
 	}
-	return h(c)
+	return h(ctx, c)
 }
 
-func (d *DispatcherInMemory) dispatchToQueryHandler(cq interface{}, handler interface{}) (interface{}, error) {
+func (d *DispatcherInMemory) dispatchToQueryHandler(ctx context.Context, cq interface{}, handler interface{}) (interface{}, error) {
 	h, _ := handler.(cqrs.QueryHandler)
 	q, _ := cq.(cqrs.Command)
-	return h.Handle(q)
+	return h.Handle(ctx, q)
 }
 
 func (d *DispatcherInMemory) AddHandler(handler interface{}, cq ...interface{}) error {
 	for _, item := range cq {
 		typeName := d.getTypeOf(item)
 		if _, ok := d.handlers[typeName]; ok {
-			return errors.New(fmt.Sprintf("%s %s", cqrs.ErrMessageHandlerDuplicated, typeName))
+			return fmt.Errorf("%s %s", cqrs.ErrMessageHandlerDuplicated, typeName)
 		}
 		d.handlers[typeName] = handler
 	}
