@@ -1,6 +1,7 @@
 package memory_test
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -12,9 +13,7 @@ import (
 )
 
 func TestNewInstanceOfDispatcher(t *testing.T) {
-	var d cqrs.Dispatcher
-	d = memory.NewDispatcherInMemory()
-	if d == nil {
+	if d := memory.NewDispatcherInMemory(); d == nil {
 		t.Fail()
 	}
 }
@@ -107,7 +106,7 @@ func TestDispatcherDispatch(t *testing.T) {
 
 		d.Use(test.middleware...)
 
-		_, err := d.Dispatch(test.commandQuery)
+		_, err := d.Dispatch(context.Background(), test.commandQuery)
 		assert.Equal(t, test.expected, err, "They value does not equals")
 	}
 }
@@ -139,7 +138,7 @@ func NewMockCommandHandler() cqrs.CommandHandler {
 
 type MockCommandHandler struct{}
 
-func (handle *MockCommandHandler) Handle(c cqrs.Command) (interface{}, error) {
+func (handle *MockCommandHandler) Handle(ctx context.Context, c cqrs.Command) (interface{}, error) {
 	return nil, nil
 }
 
@@ -161,6 +160,6 @@ func NewMockQueryHandler() cqrs.QueryHandler {
 
 type MockQueryHandler struct{}
 
-func (handle *MockQueryHandler) Handle(c cqrs.Query) (interface{}, error) {
+func (handle *MockQueryHandler) Handle(ctx context.Context, c cqrs.Query) (interface{}, error) {
 	return nil, nil
 }

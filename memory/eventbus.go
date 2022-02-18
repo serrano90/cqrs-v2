@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/serrano90/cqrs-v2"
@@ -17,11 +18,11 @@ func NewEventBusInMemory() cqrs.EventBus {
 }
 
 // Publish is a methos where send the event to others services
-func (bus *EventBusInMemory) Publish(event cqrs.Event) {
+func (bus *EventBusInMemory) Publish(ctx context.Context, event cqrs.Event) {
 	typeName := event.TypeOf()
 	if handlers, ok := bus.handlers[typeName]; ok {
 		for _, handle := range handlers {
-			handle.Handle(event)
+			handle.Handle(ctx, event)
 		}
 	}
 }

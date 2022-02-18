@@ -1,14 +1,15 @@
 package cqrs
 
-// Dispatcher is a interface that all dispatcher schema should implement
+import "context"
+
+// Dispatcher is an interface that all dispatcher schema should implement.
 //
-// With dispatcher is the form do you destributed the commnad or query to the
-// determinated command handler or query handler.
+// The dispatcher is the form do you distribute the command or query to the determined handler
 type Dispatcher interface {
-	// Manage a command or query for send to determinated handler
-	Dispatch(interface{}) (interface{}, error)
-	// Add a new to handler for a especified type
+	// Dispatch dispatches a command or query to the specified controller to be served
+	Dispatch(context.Context, interface{}) (interface{}, error)
+	// AddHandler registers and command handler for a specified command type
 	AddHandler(interface{}, ...interface{}) error
-	// Use is a function where add middleware
+	// Use registers the handler middlewares where will pass the command before being dispatched to command handler
 	Use(...CommandHandlerMiddleware)
 }

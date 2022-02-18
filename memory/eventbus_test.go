@@ -1,6 +1,7 @@
 package memory_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -9,9 +10,7 @@ import (
 )
 
 func TestNewInstanceOfEventBus(t *testing.T) {
-	var d cqrs.EventBus
-	d = memory.NewEventBusInMemory()
-	if d == nil {
+	if d := memory.NewEventBusInMemory(); d == nil {
 		t.Fail()
 	}
 }
@@ -67,7 +66,7 @@ func TestEventBusPublish(t *testing.T) {
 			bus.AddHandler(h, test.event)
 		}
 
-		bus.Publish(test.eventPublish)
+		bus.Publish(context.Background(), test.eventPublish)
 	}
 }
 
@@ -99,7 +98,7 @@ func NewTestEventHandler() cqrs.EventHandler {
 	return &TestEventHandler{}
 }
 
-func (handler *TestEventHandler) Handle(e cqrs.Event) {}
+func (handler *TestEventHandler) Handle(ctx context.Context, e cqrs.Event) {}
 
 type TestEventHandler2 struct{}
 
@@ -107,4 +106,4 @@ func NewTestEventHandler2() cqrs.EventHandler {
 	return &TestEventHandler2{}
 }
 
-func (handler *TestEventHandler2) Handle(e cqrs.Event) {}
+func (handler *TestEventHandler2) Handle(ctx context.Context, e cqrs.Event) {}
