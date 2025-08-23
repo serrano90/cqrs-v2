@@ -27,8 +27,8 @@ type AggregateBase struct {
 	events []Event
 }
 
-// GetAggreagteID returns the id of aggregate
-func (a *AggregateBase) GetAggreagteID() string {
+// GetAggregateID returns the id of aggregate
+func (a *AggregateBase) GetAggregateID() string {
 	return a.id
 }
 
