@@ -1,0 +1,35 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build / test output
+*.test
+*.out
+coverage.out
+*.coverprofile
+
+# Dependency directories (uncomment if you use vendoring)
+# vendor/
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Module cache (if accidentally checked in)
+pkg/
+pkg/mod/
+
+# Generated files
+*.a
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

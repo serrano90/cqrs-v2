@@ -1,3 +1,7 @@
+// File aggregatebase.go: a lightweight base implementation for aggregates.
+//
+// Provides a simple AggregateBase that generates or accepts an ID and
+// keeps an in-memory slice of events recorded by the aggregate.
 package cqrs
 
 // Create a new instance of base aggregate
@@ -16,23 +20,24 @@ func NewAggregateBaseById(id string) Aggregate {
 	}
 }
 
-// AggregateBase reprecent a new instance of base aggregate
+// AggregateBase represents a minimal aggregate implementation used in
+// examples and tests. It stores an ID and a slice of tracked events.
 type AggregateBase struct {
 	id     string
 	events []Event
 }
 
-// GetAggreagteID returns the is of aggregate
-func (a *AggregateBase) GetAggreagteID() string {
+// GetAggregateID returns the id of aggregate
+func (a *AggregateBase) GetAggregateID() string {
 	return a.id
 }
 
-// TrackEvent add a new event track for aggregate
+// TrackEvent appends a new event to the aggregate's event buffer.
 func (a *AggregateBase) TrackEvent(e Event) {
 	a.events = append(a.events, e)
 }
 
-// GetEvents return a array of event tracking
+// GetEvents returns a copy of the currently tracked events.
 func (a *AggregateBase) GetEvents() []Event {
 	return a.events
 }

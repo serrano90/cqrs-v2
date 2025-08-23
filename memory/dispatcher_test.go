@@ -19,34 +19,15 @@ func TestNewInstanceOfDispatcher(t *testing.T) {
 }
 
 func TestDispatcherAddHandler(t *testing.T) {
-	tests := map[string]struct {
-		handler      interface{}
-		commandQuery []interface{}
-		expected     error
-	}{
-		"success": {
-			handler: NewMockCommandHandler(),
-			commandQuery: []interface{}{
-				NewTestCommand("x"),
-			},
-			expected: nil,
-		},
-		"when the type name exist": {
-			handler: NewMockCommandHandler(),
-			commandQuery: []interface{}{
-				NewTestCommand("x"),
-			},
-			expected: errors.New(cqrs.ErrMessageHandlerDuplicated + " TestCommand"),
-		},
-	}
-
 	d := memory.NewDispatcherInMemory()
-	for name, test := range tests {
-		t.Logf("Running test case: %s", name)
 
-		err := d.AddHandler(test.handler, test.commandQuery...)
-		assert.Equal(t, test.expected, err, "They value does not equals")
-	}
+	// First registration should succeed
+	err := d.AddHandler(NewMockCommandHandler(), NewTestCommand("x"))
+	assert.Equal(t, nil, err, "First registration should succeed")
+
+	// Second registration for the same command type should return duplicated error
+	err = d.AddHandler(NewMockCommandHandler(), NewTestCommand("x"))
+	assert.Equal(t, errors.New(cqrs.ErrMessageHandlerDuplicated+" TestCommand"), err, "Should return duplicated error")
 
 }
 

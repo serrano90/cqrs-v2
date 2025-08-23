@@ -1,3 +1,8 @@
+// File memory/eventbus.go: in-memory EventBus implementation.
+//
+// A simple in-memory EventBus used for testing and local dispatch. It
+// maintains a map from event type to handlers and delivers events
+// synchronously to each registered handler.
 package memory
 
 import (
@@ -17,7 +22,7 @@ func NewEventBusInMemory() cqrs.EventBus {
 	}
 }
 
-// Publish is a methos where send the event to others services
+// Publish synchronously delivers the event to all registered handlers.
 func (bus *EventBusInMemory) Publish(ctx context.Context, event cqrs.Event) {
 	typeName := event.TypeOf()
 	if handlers, ok := bus.handlers[typeName]; ok {
@@ -27,7 +32,7 @@ func (bus *EventBusInMemory) Publish(ctx context.Context, event cqrs.Event) {
 	}
 }
 
-// AddHandler add the event handler for each event
+// AddHandler registers the provided handler for each given event type.
 func (bus *EventBusInMemory) AddHandler(eventhandler cqrs.EventHandler, events ...cqrs.Event) {
 	for _, event := range events {
 		typeNameEvent := event.TypeOf()
