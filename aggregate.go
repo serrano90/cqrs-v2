@@ -9,8 +9,8 @@ package cqrs
 // It exposes a stable identifier and a small event buffer used by
 // dispatchers / event buses to publish changes.
 type Aggregate interface {
-	// GetAggreagteID returns the aggregate's identifier.
-	GetAggreagteID() string
+	// GetAggregateID returns the aggregate's identifier.
+	GetAggregateID() string
 	// TrackEvent records a new domain event for later publication.
 	TrackEvent(Event)
 	// GetEvents returns the slice of recorded domain events.
