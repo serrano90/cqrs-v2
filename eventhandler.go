@@ -1,9 +1,15 @@
+// File eventhandler.go: event handler contract.
+//
+// Event handlers implement application-specific logic that runs when an
+// event is published (e.g., projection updates, notifications, side effects).
 package cqrs
 
 import "context"
 
-// EventHandler is a interface that all event handler should implement
+// EventHandler handles domain events delivered by an EventBus.
+// Implementations should ensure their Handle method is safe and resilient
+// to failures; the bus implementation controls retry or error handling.
 type EventHandler interface {
-	// Handler is the method where orquestated the logic for send event
+	// Handle is invoked for each matching event.
 	Handle(context.Context, Event)
 }

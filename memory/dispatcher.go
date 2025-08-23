@@ -1,3 +1,8 @@
+// File memory/dispatcher.go: in-memory Dispatcher implementation.
+//
+// A simple Dispatcher implementation that maps command/query types to
+// handlers and applies middleware to command handlers. Intended for tests
+// and local use.
 package memory
 
 import (
