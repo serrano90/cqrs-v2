@@ -1,52 +1,109 @@
-// File memory/eventbus.go: in-memory EventBus implementation.
+// File memory/eventbus.go: in-memory publish/subscribe event bus.
 //
-// A simple in-memory EventBus used for testing and local dispatch. It
-// maintains a map from event type to handlers and delivers events
-// synchronously to each registered handler.
+// A simple in-memory event bus used for testing and local dispatch. It
+// implements the cqrs.EventBus contract for the cqrs.Event interface:
+// events are routed by their topic and delivered synchronously to the
+// handler subscribed to that topic. Each topic holds at most one handler,
+// and handlers receive the cqrs.Event interface and assert the concrete
+// event type they expect.
+
 package memory
 
 import (
 	"context"
-	"reflect"
+	"errors"
+	"sync"
 
-	"github.com/serrano90/cqrs-v2"
+	"github.com/serrano90/cqrs-v2/v3"
 )
 
+// EventBusInMemory delivers published events to topic subscriptions.
 type EventBusInMemory struct {
-	handlers map[string]map[string]cqrs.EventHandler
+	// mu guards stopped and subscriptions.
+	mu      sync.RWMutex
+	stopped bool
+	// subscriptions keyed by topic.
+	subscriptions map[string]cqrs.EventHandler[cqrs.Event]
 }
 
-func NewEventBusInMemory() cqrs.EventBus {
+// NewEventBusInMemory creates an empty in-memory event bus that satisfies
+// the cqrs.EventBus contract.
+func NewEventBusInMemory() cqrs.EventBus[cqrs.Event] {
 	return &EventBusInMemory{
-		handlers: make(map[string]map[string]cqrs.EventHandler, 0),
+		subscriptions: make(map[string]cqrs.EventHandler[cqrs.Event]),
 	}
 }
 
-// Publish synchronously delivers the event to all registered handlers.
-func (bus *EventBusInMemory) Publish(ctx context.Context, event cqrs.Event) {
-	typeName := event.TypeOf()
-	if handlers, ok := bus.handlers[typeName]; ok {
-		for _, handle := range handlers {
-			handle.Handle(ctx, event)
-		}
+// Publish delivers the event synchronously to the handler subscribed to
+// the event's topic. The handler is invoked after the lock is released so
+// handlers can safely call back into the bus.
+func (b *EventBusInMemory) Publish(ctx context.Context, e cqrs.Event) error {
+	b.mu.RLock()
+	if b.stopped {
+		b.mu.RUnlock()
+		return errors.New(cqrs.ErrMessageEventBusStopped)
 	}
+	h, ok := b.subscriptions[e.Topic()]
+	b.mu.RUnlock()
+
+	if ok {
+		h.Handle(ctx, e)
+	}
+	return nil
 }
 
-// AddHandler registers the provided handler for each given event type.
-func (bus *EventBusInMemory) AddHandler(eventhandler cqrs.EventHandler, events ...cqrs.Event) {
-	for _, event := range events {
-		typeNameEvent := event.TypeOf()
-		if _, ok := bus.handlers[typeNameEvent]; !ok {
-			bus.handlers[typeNameEvent] = make(map[string]cqrs.EventHandler, 0)
-		}
-
-		typeNameEventHandler := bus.getTypeOf(eventhandler)
-		if _, ok := bus.handlers[typeNameEvent][typeNameEventHandler]; !ok {
-			bus.handlers[typeNameEvent][typeNameEventHandler] = eventhandler
-		}
+// Subscribe registers the handler for the given topic. It returns an
+// error when the topic already has a handler or the bus has been stopped.
+func (b *EventBusInMemory) Subscribe(topic string, h cqrs.EventHandler[cqrs.Event]) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.stopped {
+		return errors.New(cqrs.ErrMessageEventBusStopped)
 	}
+	if _, ok := b.subscriptions[topic]; ok {
+		return errors.New(cqrs.ErrMessageSubscriptionDuplicated)
+	}
+	b.subscriptions[topic] = h
+	return nil
 }
 
-func (bus *EventBusInMemory) getTypeOf(h cqrs.EventHandler) string {
-	return reflect.TypeOf(h).Elem().Name()
+// Unsubscribe removes the handler subscribed to the given topic. It
+// returns an error when the topic has no subscription or the bus has been
+// stopped.
+func (b *EventBusInMemory) Unsubscribe(topic string, _ cqrs.EventHandler[cqrs.Event]) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.stopped {
+		return errors.New(cqrs.ErrMessageEventBusStopped)
+	}
+	if _, ok := b.subscriptions[topic]; !ok {
+		return errors.New(cqrs.ErrMessageSubscriptionDoesNotExist)
+	}
+	delete(b.subscriptions, topic)
+	return nil
+}
+
+// UnsubscribeAll removes every subscription on the given topic. It
+// returns an error when the bus has been stopped.
+func (b *EventBusInMemory) UnsubscribeAll(topic string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.stopped {
+		return errors.New(cqrs.ErrMessageEventBusStopped)
+	}
+	delete(b.subscriptions, topic)
+	return nil
+}
+
+// Stop stops the bus and releases every subscription. After Stop, all bus
+// operations return an error, including stopping it again.
+func (b *EventBusInMemory) Stop() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.stopped {
+		return errors.New(cqrs.ErrMessageEventBusStopped)
+	}
+	b.stopped = true
+	b.subscriptions = make(map[string]cqrs.EventHandler[cqrs.Event])
+	return nil
 }

@@ -1,10 +1,10 @@
-module github.com/serrano90/cqrs-v2
+module github.com/serrano90/cqrs-v2/v3
 
-go 1.25
+go 1.26
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
