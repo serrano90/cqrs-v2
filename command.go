@@ -2,6 +2,7 @@
 //
 // Defines the Command contract and an optional validation interface that
 // commands can implement to validate their payload prior to handling.
+
 package cqrs
 
 // Command represents a domain command.

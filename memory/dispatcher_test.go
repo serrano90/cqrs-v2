@@ -82,7 +82,7 @@ func TestDispatcherDispatchCommand(t *testing.T) {
 			memory.Use(d, m)
 		}
 
-		_, err := memory.DispatchCommand[*TestCommand, any](d, context.Background(), test.command)
+		_, err := memory.DispatchCommand[*TestCommand, any](context.Background(), d, test.command)
 		assert.Equal(t, test.expected, err, "The value does not equal")
 	}
 }
@@ -93,13 +93,13 @@ func TestDispatcherDispatchQuery(t *testing.T) {
 	err := memory.AddQueryHandler[*TestQuery, string](d, NewMockQueryHandler())
 	assert.Equal(t, nil, err, "Registration should succeed")
 
-	res, err := memory.DispatchQuery[*TestQuery, string](d, context.Background(), NewTestQuery())
+	res, err := memory.DispatchQuery[*TestQuery, string](context.Background(), d, NewTestQuery())
 	assert.Equal(t, nil, err, "Dispatch should succeed")
 	assert.Equal(t, "result", res, "Should return the handler result")
 
 	// Dispatching a query without a registered handler should fail
 	d2 := memory.NewDispatcherInMemory()
-	_, err = memory.DispatchQuery[*TestQuery, string](d2, context.Background(), NewTestQuery())
+	_, err = memory.DispatchQuery[*TestQuery, string](context.Background(), d2, NewTestQuery())
 	assert.Equal(t, errors.New(cqrs.ErrMessageHandlerDoesNotExist), err, "Should return does-not-exist error")
 }
 
@@ -110,18 +110,18 @@ func TestDispatcherDispatchIncompatibleResultType(t *testing.T) {
 	assert.Equal(t, nil, err, "Registration should succeed")
 
 	// Dispatching with a result type different from the registered one fails
-	_, err = memory.DispatchCommand[*TestCommand, string](d, context.Background(), NewTestCommand("x"))
+	_, err = memory.DispatchCommand[*TestCommand, string](context.Background(), d, NewTestCommand("x"))
 	assert.Equal(t, errors.New("registered handler has incompatible type for TestCommand"), err, "Should return incompatible-type error")
 }
 
 func NewTestCommand(id string) *TestCommand {
 	return &TestCommand{
-		Id: id,
+		ID: id,
 	}
 }
 
 type TestCommand struct {
-	Id string
+	ID string
 }
 
 func (tc *TestCommand) TypeOf() string {
@@ -129,7 +129,7 @@ func (tc *TestCommand) TypeOf() string {
 }
 
 func (tc *TestCommand) Validate() error {
-	if tc.Id == "" {
+	if tc.ID == "" {
 		return errors.New("The value is empty")
 	}
 	return nil
@@ -141,7 +141,7 @@ func NewMockCommandHandler() cqrs.CommandHandler[*TestCommand, any] {
 
 type MockCommandHandler struct{}
 
-func (handle *MockCommandHandler) Handle(ctx context.Context, c *TestCommand) (any, error) {
+func (handle *MockCommandHandler) Handle(_ context.Context, _ *TestCommand) (any, error) {
 	return nil, nil
 }
 
@@ -150,7 +150,7 @@ func NewTestQuery() *TestQuery {
 }
 
 type TestQuery struct {
-	Id string
+	ID string
 }
 
 func (tc *TestQuery) TypeOf() string {
@@ -163,6 +163,6 @@ func NewMockQueryHandler() cqrs.QueryHandler[*TestQuery, string] {
 
 type MockQueryHandler struct{}
 
-func (handle *MockQueryHandler) Handle(ctx context.Context, q *TestQuery) (string, error) {
+func (handle *MockQueryHandler) Handle(_ context.Context, _ *TestQuery) (string, error) {
 	return "result", nil
 }

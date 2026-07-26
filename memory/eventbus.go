@@ -6,6 +6,7 @@
 // handler subscribed to that topic. Each topic holds at most one handler,
 // and handlers receive the cqrs.Event interface and assert the concrete
 // event type they expect.
+
 package memory
 
 import (
@@ -69,7 +70,7 @@ func (b *EventBusInMemory) Subscribe(topic string, h cqrs.EventHandler[cqrs.Even
 // Unsubscribe removes the handler subscribed to the given topic. It
 // returns an error when the topic has no subscription or the bus has been
 // stopped.
-func (b *EventBusInMemory) Unsubscribe(topic string, h cqrs.EventHandler[cqrs.Event]) error {
+func (b *EventBusInMemory) Unsubscribe(topic string, _ cqrs.EventHandler[cqrs.Event]) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.stopped {

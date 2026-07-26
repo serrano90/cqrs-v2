@@ -5,6 +5,7 @@
 // and dispatch are exposed as generic package-level functions because Go
 // interfaces cannot declare generic methods. Intended for tests and local
 // use.
+
 package memory
 
 import (
@@ -74,7 +75,7 @@ func Use[C cqrs.Command, R any](d *DispatcherInMemory, mw cqrs.CommandHandlerMid
 // DispatchCommand dispatches a command to its registered handler, wrapping
 // it with every compatible middleware. Middlewares run in registration
 // order: the first registered is the outermost.
-func DispatchCommand[C cqrs.Command, R any](d *DispatcherInMemory, ctx context.Context, c C) (R, error) {
+func DispatchCommand[C cqrs.Command, R any](ctx context.Context, d *DispatcherInMemory, c C) (R, error) {
 	var zero R
 	t := reflect.TypeOf(c)
 	hAny, ok := d.commandHandlers[t]
@@ -96,7 +97,7 @@ func DispatchCommand[C cqrs.Command, R any](d *DispatcherInMemory, ctx context.C
 }
 
 // DispatchQuery dispatches a query to its registered handler.
-func DispatchQuery[Q cqrs.Query, R any](d *DispatcherInMemory, ctx context.Context, q Q) (R, error) {
+func DispatchQuery[Q cqrs.Query, R any](ctx context.Context, d *DispatcherInMemory, q Q) (R, error) {
 	var zero R
 	t := reflect.TypeOf(q)
 	hAny, ok := d.queryHandlers[t]
@@ -125,7 +126,7 @@ func typeOf[T any](kind string) (reflect.Type, error) {
 // typeName returns a readable name for t, unwrapping pointers so that
 // *TestCommand is reported as TestCommand.
 func typeName(t reflect.Type) string {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		return t.Elem().Name()
 	}
 	return t.Name()

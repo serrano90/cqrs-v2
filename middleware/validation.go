@@ -2,6 +2,7 @@
 //
 // Provides a middleware that inspects a command for the CommandValidate
 // interface and runs its Validate method before passing the command on.
+
 package middleware
 
 import (

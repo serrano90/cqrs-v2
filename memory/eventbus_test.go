@@ -13,8 +13,8 @@ import (
 
 func TestNewInstanceOfEventBus(t *testing.T) {
 	// The constructor returns the cqrs.EventBus contract
-	var b cqrs.EventBus[cqrs.Event] = memory.NewEventBusInMemory()
-	if b == nil {
+	var b cqrs.EventBus[cqrs.Event]
+	if b = memory.NewEventBusInMemory(); b == nil {
 		t.Fail()
 	}
 }
@@ -148,6 +148,6 @@ type TestEventHandler struct {
 	calls int
 }
 
-func (handler *TestEventHandler) Handle(ctx context.Context, e cqrs.Event) {
+func (handler *TestEventHandler) Handle(_ context.Context, _ cqrs.Event) {
 	handler.calls++
 }

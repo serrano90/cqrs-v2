@@ -3,6 +3,7 @@
 // Event handlers implement application-specific logic that runs when an
 // event is published (e.g., projection updates, notifications, side effects).
 // E is the concrete event type the handler subscribes to.
+
 package cqrs
 
 import "context"

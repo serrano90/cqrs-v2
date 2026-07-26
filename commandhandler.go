@@ -4,6 +4,7 @@
 // used to wrap handlers with additional behavior (validation, logging, etc.).
 // The type parameters provide compile-time safety: C is the concrete command
 // type and R is the result type produced by the handler.
+
 package cqrs
 
 import "context"

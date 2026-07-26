@@ -13,6 +13,7 @@
 // parameterized by the event type E. Instantiate it with a concrete event
 // type for a single-event bus, or with the Event interface itself to
 // transport every event type on one bus.
+
 package cqrs
 
 import "context"

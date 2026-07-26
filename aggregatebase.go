@@ -2,6 +2,7 @@
 //
 // Provides a simple AggregateBase that generates or accepts an ID and
 // keeps an in-memory slice of events recorded by the aggregate.
+
 package cqrs
 
 // NewAggregateBase creates a new aggregate base with a random ID.

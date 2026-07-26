@@ -2,6 +2,7 @@
 //
 // Convenience helper to produce UUID strings used as default aggregate IDs
 // in examples and tests.
+
 package cqrs
 
 import (

@@ -27,7 +27,7 @@ func (tc *TestCommand) Validate() error {
 
 type TestCommandHandler struct{}
 
-func (h *TestCommandHandler) Handle(ctx context.Context, cmd *TestCommand) (string, error) {
+func (h *TestCommandHandler) Handle(_ context.Context, _ *TestCommand) (string, error) {
 	return "Success", nil
 }
 

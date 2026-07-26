@@ -3,6 +3,7 @@
 // QueryHandler is implemented by components that serve queries and return
 // results. Q is the concrete query type and R is the result type, so
 // callers get a typed response instead of interface{}.
+
 package cqrs
 
 import "context"

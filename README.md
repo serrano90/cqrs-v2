@@ -55,8 +55,8 @@ Go interfaces cannot declare generic methods, so the dispatcher exposes registra
 | Register a command handler | `memory.AddCommandHandler[C, R](d, handler)` |
 | Register a query handler | `memory.AddQueryHandler[Q, R](d, handler)` |
 | Register command middleware | `memory.Use[C, R](d, middleware)` |
-| Dispatch a command | `memory.DispatchCommand[C, R](d, ctx, cmd)` |
-| Dispatch a query | `memory.DispatchQuery[Q, R](d, ctx, query)` |
+| Dispatch a command | `memory.DispatchCommand[C, R](ctx, d, cmd)` |
+| Dispatch a query | `memory.DispatchQuery[Q, R](ctx, d, query)` |
 | Create an event bus | `memory.NewEventBusInMemory()` |
 | Publish an event | `bus.Publish(ctx, event)` |
 | Subscribe to a topic | `bus.Subscribe(topic, handler)` |
@@ -111,7 +111,7 @@ func main() {
 	memory.Use(d, middleware.NewValidationMiddleware[*CreateUserCommand, string]())
 
 	// res is a string: no type assertion needed
-	res, err := memory.DispatchCommand[*CreateUserCommand, string](d, context.Background(), &CreateUserCommand{Name: "Alice"})
+	res, err := memory.DispatchCommand[*CreateUserCommand, string](context.Background(), d, &CreateUserCommand{Name: "Alice"})
 	if err != nil {
 		panic(err)
 	}
@@ -146,7 +146,7 @@ func main() {
 	d := memory.NewDispatcherInMemory()
 	memory.AddQueryHandler[*GetUserQuery, map[string]string](d, &GetUserHandler{})
 
-	res, err := memory.DispatchQuery[*GetUserQuery, map[string]string](d, context.Background(), &GetUserQuery{ID: "user-id-123"})
+	res, err := memory.DispatchQuery[*GetUserQuery, map[string]string](context.Background(), d, &GetUserQuery{ID: "user-id-123"})
 	if err != nil {
 		panic(err)
 	}

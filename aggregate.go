@@ -3,6 +3,7 @@
 // This file contains the Aggregate interface used by domain objects to
 // collect and expose domain events that should be published by the
 // infrastructure layer. E is the event type recorded by the aggregate.
+
 package cqrs
 
 // Aggregate is the interface that domain aggregates should implement.
