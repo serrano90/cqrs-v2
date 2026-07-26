@@ -4,44 +4,45 @@
 // keeps an in-memory slice of events recorded by the aggregate.
 package cqrs
 
-// Create a new instance of base aggregate
-func NewAggregateBase() Aggregate {
-	return &AggregateBase{
+// NewAggregateBase creates a new aggregate base with a random ID.
+func NewAggregateBase[E Event]() *AggregateBase[E] {
+	return &AggregateBase[E]{
 		id:     NewUUIDString(),
-		events: []Event{},
+		events: []E{},
 	}
 }
 
-// Create a new instance of base aggregate by id
-func NewAggregateBaseById(id string) Aggregate {
-	return &AggregateBase{
+// NewAggregateBaseByID creates a new aggregate base with a fixed ID.
+func NewAggregateBaseByID[E Event](id string) *AggregateBase[E] {
+	return &AggregateBase[E]{
 		id:     id,
-		events: []Event{},
+		events: []E{},
 	}
 }
 
-// AggregateBase represents a minimal aggregate implementation used in
-// examples and tests. It stores an ID and a slice of tracked events.
-type AggregateBase struct {
+// AggregateBase is a minimal aggregate implementation that stores an ID and
+// a slice of tracked events of type E.
+type AggregateBase[E Event] struct {
 	id     string
-	events []Event
+	events []E
 }
 
-// GetAggregateID returns the id of aggregate
-func (a *AggregateBase) GetAggregateID() string {
+// GetAggregateID returns the id of the aggregate.
+func (a *AggregateBase[E]) GetAggregateID() string {
 	return a.id
 }
 
 // TrackEvent appends a new event to the aggregate's event buffer.
-func (a *AggregateBase) TrackEvent(e Event) {
+func (a *AggregateBase[E]) TrackEvent(e E) {
 	a.events = append(a.events, e)
 }
 
-// GetEvents returns a copy of the currently tracked events.
-func (a *AggregateBase) GetEvents() []Event {
+// GetEvents returns the currently tracked events.
+func (a *AggregateBase[E]) GetEvents() []E {
 	return a.events
 }
 
-func (a *AggregateBase) ClearEvents() {
-	a.events = []Event{}
+// ClearEvents clears the recorded events after they have been published.
+func (a *AggregateBase[E]) ClearEvents() {
+	a.events = []E{}
 }

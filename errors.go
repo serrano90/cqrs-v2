@@ -6,6 +6,9 @@
 package cqrs
 
 var (
-	ErrMessageHandlerDoesNotExist = "The command or query handler does not exist"
-	ErrMessageHandlerDuplicated   = "The command or query handler is duplicated for command or query"
+	ErrMessageHandlerDoesNotExist      = "The command or query handler does not exist"
+	ErrMessageHandlerDuplicated        = "The command or query handler is duplicated for command or query"
+	ErrMessageEventBusStopped          = "The event bus is stopped"
+	ErrMessageSubscriptionDuplicated   = "The subscription is duplicated for the topic"
+	ErrMessageSubscriptionDoesNotExist = "The subscription does not exist for the topic"
 )

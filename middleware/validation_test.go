@@ -6,8 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/serrano90/cqrs-v2"
-	"github.com/serrano90/cqrs-v2/middleware"
+	"github.com/serrano90/cqrs-v2/v3/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ type TestCommand struct {
 }
 
 func (tc *TestCommand) TypeOf() string {
-	return reflect.TypeOf(tc).Name()
+	return reflect.TypeOf(tc).Elem().Name()
 }
 
 func (tc *TestCommand) Validate() error {
@@ -28,14 +27,14 @@ func (tc *TestCommand) Validate() error {
 
 type TestCommandHandler struct{}
 
-func (h *TestCommandHandler) Handle(ctx context.Context, cmd cqrs.Command) (interface{}, error) {
+func (h *TestCommandHandler) Handle(ctx context.Context, cmd *TestCommand) (string, error) {
 	return "Success", nil
 }
 
 func TestValidateMiddleware(t *testing.T) {
 	cases := map[string]struct {
-		cmd           cqrs.Command
-		expected      interface{}
+		cmd           *TestCommand
+		expected      string
 		expectedError error
 	}{
 		"success": {
@@ -45,23 +44,23 @@ func TestValidateMiddleware(t *testing.T) {
 			expected:      "Success",
 			expectedError: nil,
 		},
-		"when the value does not valid": {
+		"when the value is not valid": {
 			cmd: &TestCommand{
 				value: "",
 			},
-			expected:      nil,
+			expected:      "",
 			expectedError: errors.New("The value is empty"),
 		},
 	}
 
 	ch := &TestCommandHandler{}
-	m := middleware.NewValidationMiddleware()
+	m := middleware.NewValidationMiddleware[*TestCommand, string]()
 	for name, test := range cases {
 		t.Logf("Running test case: %s", name)
 		h := m(ch.Handle)
 		resp, err := h(context.Background(), test.cmd)
 
-		assert.Equal(t, test.expected, resp, "The expected value and result value not equals")
-		assert.Equal(t, test.expectedError, err, "The expected value and result value not equals")
+		assert.Equal(t, test.expected, resp, "The expected value and result value are not equal")
+		assert.Equal(t, test.expectedError, err, "The expected error and result error are not equal")
 	}
 }

@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/serrano90/cqrs-v2"
-	"github.com/serrano90/cqrs-v2/memory"
-	"github.com/serrano90/cqrs-v2/middleware"
+	"github.com/serrano90/cqrs-v2/v3"
+	"github.com/serrano90/cqrs-v2/v3/memory"
+	"github.com/serrano90/cqrs-v2/v3/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,57 +18,50 @@ func TestNewInstanceOfDispatcher(t *testing.T) {
 	}
 }
 
-func TestDispatcherAddHandler(t *testing.T) {
+func TestDispatcherAddCommandHandler(t *testing.T) {
 	d := memory.NewDispatcherInMemory()
 
 	// First registration should succeed
-	err := d.AddHandler(NewMockCommandHandler(), NewTestCommand("x"))
+	err := memory.AddCommandHandler[*TestCommand, any](d, NewMockCommandHandler())
 	assert.Equal(t, nil, err, "First registration should succeed")
 
 	// Second registration for the same command type should return duplicated error
-	err = d.AddHandler(NewMockCommandHandler(), NewTestCommand("x"))
+	err = memory.AddCommandHandler[*TestCommand, any](d, NewMockCommandHandler())
 	assert.Equal(t, errors.New(cqrs.ErrMessageHandlerDuplicated+" TestCommand"), err, "Should return duplicated error")
-
 }
 
-func TestDispatcherDispatch(t *testing.T) {
+func TestDispatcherDispatchCommand(t *testing.T) {
 	tests := map[string]struct {
-		handler      interface{}
-		commandQuery interface{}
-		middleware   []cqrs.CommandHandlerMiddleware
-		expected     error
+		handler    cqrs.CommandHandler[*TestCommand, any]
+		command    *TestCommand
+		middleware []cqrs.CommandHandlerMiddleware[*TestCommand, any]
+		expected   error
 	}{
-		"success when the values is a command": {
-			handler:      NewMockCommandHandler(),
-			commandQuery: NewTestCommand("x"),
-			middleware:   nil,
-			expected:     nil,
+		"success when the value is a command": {
+			handler:    NewMockCommandHandler(),
+			command:    NewTestCommand("x"),
+			middleware: nil,
+			expected:   nil,
 		},
 		"success using middlewares": {
-			handler:      NewMockCommandHandler(),
-			commandQuery: NewTestCommand("x"),
-			middleware: []cqrs.CommandHandlerMiddleware{
-				middleware.NewValidationMiddleware(),
+			handler: NewMockCommandHandler(),
+			command: NewTestCommand("x"),
+			middleware: []cqrs.CommandHandlerMiddleware[*TestCommand, any]{
+				middleware.NewValidationMiddleware[*TestCommand, any](),
 			},
 			expected: nil,
 		},
-		"success when the values is a query": {
-			handler:      NewMockQueryHandler(),
-			commandQuery: NewTestQuery(),
-			middleware:   nil,
-			expected:     nil,
-		},
-		"when the type name does not exit": {
-			handler:      nil,
-			commandQuery: NewTestCommand("x"),
-			middleware:   nil,
-			expected:     errors.New(cqrs.ErrMessageHandlerDoesNotExist),
+		"when the handler does not exist": {
+			handler:    nil,
+			command:    NewTestCommand("x"),
+			middleware: nil,
+			expected:   errors.New(cqrs.ErrMessageHandlerDoesNotExist),
 		},
 		"when using middlewares and value is not valid": {
-			handler:      NewMockCommandHandler(),
-			commandQuery: NewTestCommand(""),
-			middleware: []cqrs.CommandHandlerMiddleware{
-				middleware.NewValidationMiddleware(),
+			handler: NewMockCommandHandler(),
+			command: NewTestCommand(""),
+			middleware: []cqrs.CommandHandlerMiddleware[*TestCommand, any]{
+				middleware.NewValidationMiddleware[*TestCommand, any](),
 			},
 			expected: errors.New("The value is empty"),
 		},
@@ -79,20 +72,49 @@ func TestDispatcherDispatch(t *testing.T) {
 
 		d := memory.NewDispatcherInMemory()
 		if test.handler != nil {
-			err := d.AddHandler(test.handler, test.commandQuery)
+			err := memory.AddCommandHandler(d, test.handler)
 			if err != nil {
 				t.Fail()
 			}
 		}
 
-		d.Use(test.middleware...)
+		for _, m := range test.middleware {
+			memory.Use(d, m)
+		}
 
-		_, err := d.Dispatch(context.Background(), test.commandQuery)
-		assert.Equal(t, test.expected, err, "They value does not equals")
+		_, err := memory.DispatchCommand[*TestCommand, any](d, context.Background(), test.command)
+		assert.Equal(t, test.expected, err, "The value does not equal")
 	}
 }
 
-func NewTestCommand(id string) cqrs.Command {
+func TestDispatcherDispatchQuery(t *testing.T) {
+	d := memory.NewDispatcherInMemory()
+
+	err := memory.AddQueryHandler[*TestQuery, string](d, NewMockQueryHandler())
+	assert.Equal(t, nil, err, "Registration should succeed")
+
+	res, err := memory.DispatchQuery[*TestQuery, string](d, context.Background(), NewTestQuery())
+	assert.Equal(t, nil, err, "Dispatch should succeed")
+	assert.Equal(t, "result", res, "Should return the handler result")
+
+	// Dispatching a query without a registered handler should fail
+	d2 := memory.NewDispatcherInMemory()
+	_, err = memory.DispatchQuery[*TestQuery, string](d2, context.Background(), NewTestQuery())
+	assert.Equal(t, errors.New(cqrs.ErrMessageHandlerDoesNotExist), err, "Should return does-not-exist error")
+}
+
+func TestDispatcherDispatchIncompatibleResultType(t *testing.T) {
+	d := memory.NewDispatcherInMemory()
+
+	err := memory.AddCommandHandler[*TestCommand, any](d, NewMockCommandHandler())
+	assert.Equal(t, nil, err, "Registration should succeed")
+
+	// Dispatching with a result type different from the registered one fails
+	_, err = memory.DispatchCommand[*TestCommand, string](d, context.Background(), NewTestCommand("x"))
+	assert.Equal(t, errors.New("registered handler has incompatible type for TestCommand"), err, "Should return incompatible-type error")
+}
+
+func NewTestCommand(id string) *TestCommand {
 	return &TestCommand{
 		Id: id,
 	}
@@ -103,7 +125,7 @@ type TestCommand struct {
 }
 
 func (tc *TestCommand) TypeOf() string {
-	return reflect.TypeOf(tc).Name()
+	return reflect.TypeOf(tc).Elem().Name()
 }
 
 func (tc *TestCommand) Validate() error {
@@ -113,17 +135,17 @@ func (tc *TestCommand) Validate() error {
 	return nil
 }
 
-func NewMockCommandHandler() cqrs.CommandHandler {
+func NewMockCommandHandler() cqrs.CommandHandler[*TestCommand, any] {
 	return &MockCommandHandler{}
 }
 
 type MockCommandHandler struct{}
 
-func (handle *MockCommandHandler) Handle(ctx context.Context, c cqrs.Command) (interface{}, error) {
+func (handle *MockCommandHandler) Handle(ctx context.Context, c *TestCommand) (any, error) {
 	return nil, nil
 }
 
-func NewTestQuery() cqrs.Command {
+func NewTestQuery() *TestQuery {
 	return &TestQuery{}
 }
 
@@ -132,15 +154,15 @@ type TestQuery struct {
 }
 
 func (tc *TestQuery) TypeOf() string {
-	return reflect.TypeOf(tc).Name()
+	return reflect.TypeOf(tc).Elem().Name()
 }
 
-func NewMockQueryHandler() cqrs.QueryHandler {
+func NewMockQueryHandler() cqrs.QueryHandler[*TestQuery, string] {
 	return &MockQueryHandler{}
 }
 
 type MockQueryHandler struct{}
 
-func (handle *MockQueryHandler) Handle(ctx context.Context, c cqrs.Query) (interface{}, error) {
-	return nil, nil
+func (handle *MockQueryHandler) Handle(ctx context.Context, q *TestQuery) (string, error) {
+	return "result", nil
 }
